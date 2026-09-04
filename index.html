@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAEZ — Modern Essentials, Wear Your Way</title>
+<meta name="description" content="WAEZ makes considered essentials — tees, outerwear and bottoms cut for everyday movement. Small drops, heavyweight fabrics, designed and made in Bangladesh.">
+<meta name="theme-color" content="#F5F2EA">
+<link rel="canonical" href="https://www.waez.com/">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="WAEZ">
+<meta property="og:title" content="WAEZ — Modern Essentials, Wear Your Way">
+<meta property="og:description" content="Considered essentials cut for everyday movement. Small drops, heavyweight fabrics, made in Bangladesh.">
+<meta name="twitter:card" content="summary">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<header class="site">
+  <div class="wrap nav-row">
+    <a href="#/" class="wordmark" aria-label="WAEZ, go to homepage">WAEZ</a>
+
+    <nav class="primary" aria-label="Primary">
+      <a href="#/shop?cat=new" data-route="/shop">New In</a>
+      <a href="#/shop" data-route="/shop">Shop</a>
+      <a href="#/shop?cat=tees" data-route="/shop">Essentials</a>
+      <a href="#/about" data-route="/about">Story</a>
+    </nav>
+
+    <div class="nav-right">
+      <button type="button" class="icon-link acct-txt" id="searchBtn" aria-haspopup="dialog">Search</button>
+      <a href="#/checkout" class="icon-link acct-txt">Account</a>
+      <a href="#/cart" class="icon-link" id="bagLink">
+        Bag<span class="bag-count" id="bagCount" aria-live="polite">0</span>
+      </a>
+      <button type="button" class="burger" id="burgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-drawer" id="mobileDrawer" role="dialog" aria-modal="true" aria-label="Site menu" aria-hidden="true">
+  <div class="mobile-drawer-head">
+    <span class="wordmark">WAEZ</span>
+    <button type="button" class="drawer-close" id="drawerCloseBtn" aria-label="Close menu">&times;</button>
+  </div>
+  <nav aria-label="Mobile">
+    <a href="#/shop?cat=new">New In</a>
+    <a href="#/shop">Shop</a>
+    <a href="#/shop?cat=tees">Essentials</a>
+    <a href="#/about">Story</a>
+    <a href="#/cart">Bag</a>
+  </nav>
+  <div class="sub">
+    <a href="#/shop" id="mobileSearchBtn">Search</a>
+    <a href="#/checkout">Account</a>
+  </div>
+</div>
+<div class="drawer-overlay" id="drawerOverlay" hidden></div>
+
+<main id="app" tabindex="-1"></main>
+
+<div class="live-region" id="liveRegion" role="status" aria-live="polite"></div>
+
+<footer class="site">
+  <div class="wrap footer-top">
+    <div class="footer-about">
+      <div class="footer-word">WAEZ</div>
+      <p class="footer-note">Modern essentials designed for movement, confidence and everyday expression. Dhaka &amp; Chattogram, Bangladesh.</p>
+      <form class="newsletter-form" id="newsletterForm" novalidate>
+        <label class="visually-hidden" for="newsletterEmail">Email address</label>
+        <input type="email" id="newsletterEmail" name="email" placeholder="Your email" required autocomplete="email">
+        <button type="submit">Join</button>
+      </form>
+      <p class="form-msg" id="newsletterMsg" role="status" aria-live="polite"></p>
+    </div>
+
+    <nav class="footer-col" aria-label="Shop">
+      <h4>Shop</h4>
+      <a href="#/shop?cat=new">New In</a>
+      <a href="#/shop">All Products</a>
+      <a href="#/shop?cat=tees">Tees &amp; Polos</a>
+      <a href="#/shop?cat=outerwear">Outerwear</a>
+    </nav>
+
+    <nav class="footer-col" aria-label="About">
+      <h4>About</h4>
+      <a href="#/about">Our Story</a>
+      <a href="#/about">Values</a>
+      <a href="#/about">Drops Archive</a>
+      <a href="#/contact">Contact</a>
+    </nav>
+
+    <nav class="footer-col" aria-label="Support">
+      <h4>Support</h4>
+      <a href="#/shipping">Shipping</a>
+      <a href="#/returns">Returns</a>
+      <a href="#/size-guide">Size Guide</a>
+      <a href="#/contact">Contact Us</a>
+    </nav>
+
+    <nav class="footer-col" aria-label="Follow WAEZ">
+      <h4>Stay Close</h4>
+      <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer">TikTok</a>
+      <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer">Pinterest</a>
+    </nav>
+  </div>
+
+  <div class="wrap footer-bottom">
+    <span>&copy; <span id="year">2026</span> WAEZ. All rights reserved.</span>
+    <div class="socials" aria-label="Social media">
+      <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">IG</a>
+      <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer">TT</a>
+      <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer">PIN</a>
+    </div>
+  </div>
+</footer>
+
+<noscript>
+  <div style="padding:40px;text-align:center;font-family:sans-serif;">
+    WAEZ needs JavaScript enabled to browse products and shop. Please enable it in your browser settings.
+  </div>
+</noscript>
+
+<script src="script.js" defer></script>
+</body>
+</html>
