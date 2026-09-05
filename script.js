@@ -180,6 +180,12 @@ function navigate(){
 
 window.addEventListener('hashchange', navigate);
 window.addEventListener('DOMContentLoaded', navigate);
+const siteHeader = document.querySelector('header.site');
+function updateHeaderScrollState(){
+  siteHeader.classList.toggle('is-scrolled', window.scrollY > 4);
+}
+window.addEventListener('scroll', updateHeaderScrollState, {passive:true});
+updateHeaderScrollState();
 
 const burgerBtn = document.getElementById('burgerBtn');
 const drawer = document.getElementById('mobileDrawer');
@@ -395,8 +401,9 @@ function loadingGrid(count = 8){
     <div class="p-card p-skel">
       <div class="p-media"></div>
       <div class="p-meta">
-        <div class="p-meta-line w60"></div>
+             <div class="p-meta-line w60"></div>
         <div class="p-meta-line w35"></div>
+        <div class="p-meta-line w20"></div>
       </div>
     </div>`).join('')}</div>`;
 }
@@ -779,9 +786,9 @@ function renderCartDrawer(){
         <div class="cdi-meta">${escapeHTML(cartColorName(l.product, l.item.color))} / ${escapeHTML(l.item.size)}</div>
         <div class="cdi-row">
           <div class="qty-stepper">
-            <button type="button" class="cdi-dec" aria-label="Decrease quantity of ${escapeHTML(l.product.name)}">&minus;</button>
+            <button type="button" class="cdi-dec" aria-label="Decrease quantity of ${escapeHTML(l.product.name)}" ${l.item.qty<=1?'disabled':''}>&minus;</button>
             <span aria-live="polite">${l.item.qty}</span>
-            <button type="button" class="cdi-inc" aria-label="Increase quantity of ${escapeHTML(l.product.name)}">+</button>
+            <button type="button" class="cdi-inc" aria-label="Increase quantity of ${escapeHTML(l.product.name)}" ${l.item.qty>=9?'disabled':''}>+</button>
           </div>
           <button type="button" class="remove-link cdi-remove">Remove</button>
         </div>
@@ -791,7 +798,7 @@ function renderCartDrawer(){
 
   footer.innerHTML = `
     ${shippingProgressHTML(subtotal)}
-    <div class="summary-row total"><span>Subtotal</span><span>${BDT(subtotal)}</span></div>
+    <div class="summary-row subtotal"><span>Subtotal</span><span>${BDT(subtotal)}</span></div>
     <p class="pdp-note" style="margin:2px 0 16px;">Shipping and taxes calculated at checkout.</p>
     <a href="#/cart" class="btn ghost block" id="cartDrawerViewBag">View Bag</a>
     <a href="#/checkout" class="btn block" id="cartDrawerCheckout" style="margin-top:10px;">Checkout</a>
@@ -864,7 +871,7 @@ function renderHome(){
 
     <section class="wrap home-section" aria-labelledby="categoryHeading">
       <div class="page-strip" style="border-bottom:1px solid var(--line);">
-        <h2 id="categoryHeading" style="font-size:26px;font-family:'Space Grotesk',sans-serif;font-weight:700;">Shop By Category</h2>
+      <h2 id="categoryHeading" style="font-size:34px;font-family:'Space Grotesk',sans-serif;font-weight:700;">Shop By Category</h2>
         <span class="count">4 Collections</span>
       </div>
       <div class="category-grid">
@@ -882,8 +889,8 @@ function renderHome(){
 
     <section class="wrap home-section" aria-labelledby="featuredHeading">
       <div class="page-strip" style="border-bottom:1px solid var(--line);">
-        <h2 id="featuredHeading" style="font-size:26px;font-family:'Space Grotesk',sans-serif;font-weight:700;">Featured Products</h2>
-        <a href="#/shop" class="count" style="text-decoration:underline;">View All</a>
+       <h2 id="featuredHeading" style="font-size:34px;font-family:'Space Grotesk',sans-serif;font-weight:700;">Featured Products</h2>
+        <a href="#/shop" class="count view-all">View All</a>
       </div>
       <div class="p-grid" style="margin-top:32px;">
         ${featured.map(productCard).join('')}
@@ -1220,18 +1227,18 @@ function renderPDP(id){
           <h1>${escapeHTML(p.name)}</h1>
           <div class="pdp-price">${BDT(p.price)}</div>
 
-          ${starRatingHTML(p.rating, p.reviewCount, {onClickTargetId:'acc-reviews'})}
+          ${starRatingHTML(p.rating, p.reviewCount)}
 
           <div class="pdp-block">
-            <h4 id="colorLabel">Color</h4>
+            <h4 id="colorLabel">Color: <span id="selectedColorName">${escapeHTML(p.colorNames[0])}</span></h4>
             <div class="swatches" id="swatches" role="group" aria-labelledby="colorLabel">
-              ${p.colors.map((c,i)=>`<button type="button" class="swatch" data-i="${i}" aria-pressed="${i===0}" aria-label="Color ${i+1}" style="background:${c}"></button>`).join('')}
+             ${p.colors.map((c,i)=>`<button type="button" class="swatch" data-i="${i}" aria-pressed="${i===0}" aria-label="${escapeHTML(p.colorNames[i])}" style="background:${c}"></button>`).join('')}
             </div>
           </div>
 
-          <div class="pdp-block">
+             <div class="pdp-block">
             <div class="size-head">
-              <h4 id="sizeLabel2">Size</h4>
+              <h4 id="sizeLabel2">Size: <span id="selectedSizeName">${escapeHTML(selectedSize || 'Select a size')}</span></h4>
               <button type="button" class="size-guide-link" data-scroll-to="acc-size-guide">Size Guide</button>
             </div>
             <div class="size-grid" id="sizeGrid" role="group" aria-labelledby="sizeLabel2">
@@ -1380,6 +1387,7 @@ function renderPDP(id){
       document.querySelectorAll('.swatch').forEach(s=>s.setAttribute('aria-pressed','false'));
       sw.setAttribute('aria-pressed','true');
       selectedColor = +sw.getAttribute('data-i');
+      document.getElementById('selectedColorName').textContent = p.colorNames[selectedColor];
     });
   });
   document.querySelectorAll('.size-opt:not(:disabled)').forEach(so=>{
@@ -1387,19 +1395,27 @@ function renderPDP(id){
       document.querySelectorAll('.size-opt').forEach(s=>s.setAttribute('aria-pressed','false'));
       so.setAttribute('aria-pressed','true');
       selectedSize = so.getAttribute('data-size');
+      document.getElementById('selectedSizeName').textContent = selectedSize;
       const addBtn = document.getElementById('addToCartBtn');
       addBtn.disabled = false;
       addBtn.querySelector('.btn-label').textContent = 'Add To Bag';
     });
   });
+  function updateQtyButtons(){
+    document.getElementById('qtyMinus').disabled = qty <= 1;
+    document.getElementById('qtyPlus').disabled = qty >= 9;
+  }
   document.getElementById('qtyMinus').addEventListener('click', ()=>{
     qty = Math.max(1, qty-1);
     document.getElementById('qtyVal').textContent = qty;
+    updateQtyButtons();
   });
   document.getElementById('qtyPlus').addEventListener('click', ()=>{
     qty = Math.min(9, qty+1);
     document.getElementById('qtyVal').textContent = qty;
+    updateQtyButtons();
   });
+  updateQtyButtons();
   document.getElementById('addToCartBtn').addEventListener('click', function(){
     if(!selectedSize) return;
     const btn = this;
@@ -2043,7 +2059,7 @@ function renderSizeGuide(){
   updateBagCount();
 }
 
-function renderCart(){
+function renderCart(preserveFocus){
   const lines = cartLines();
   if(!lines.length){
     app.innerHTML = `
@@ -2079,9 +2095,9 @@ function renderCart(){
               </div>
               <div class="ci-actions">
                 <div class="qty-stepper">
-                  <button type="button" class="dec" aria-label="Decrease quantity of ${escapeHTML(l.product.name)}">&minus;</button>
+                  <button type="button" class="dec" aria-label="Decrease quantity of ${escapeHTML(l.product.name)}" ${l.item.qty<=1?'disabled':''}>&minus;</button>
                   <span aria-live="polite">${l.item.qty}</span>
-                  <button type="button" class="inc" aria-label="Increase quantity of ${escapeHTML(l.product.name)}">+</button>
+                  <button type="button" class="inc" aria-label="Increase quantity of ${escapeHTML(l.product.name)}" ${l.item.qty>=9?'disabled':''}>+</button>
                 </div>
                 <button type="button" class="remove-link" data-remove="${idx}">Remove</button>
               </div>
@@ -2110,17 +2126,17 @@ function renderCart(){
     const idx = +row.getAttribute('data-idx');
     row.querySelector('.inc').addEventListener('click', ()=>{
       CART[idx].qty = Math.min(9, CART[idx].qty+1);
-      renderCart();
+      renderCart(true);
     });
     row.querySelector('.dec').addEventListener('click', ()=>{
       CART[idx].qty = Math.max(1, CART[idx].qty-1);
-      renderCart();
+      renderCart(true);
     });
   });
   document.querySelectorAll('[data-remove]').forEach(el=>{
     el.addEventListener('click', ()=>{
       const removed = CART.splice(+el.getAttribute('data-remove'), 1)[0];
-      renderCart();
+      renderCart(true);
       if(removed) announce('Item removed from bag');
     });
   });
@@ -2134,7 +2150,7 @@ function renderCart(){
   });
 
   updateBagCount();
-  focusMain();
+  if(!preserveFocus) focusMain();
 }
 
 function renderCheckout(){
@@ -2148,13 +2164,7 @@ function renderCheckout(){
   app.innerHTML = `
     <div class="wrap">
       <div class="page-strip"><h1>Checkout</h1><span class="count">${lines.length} item${lines.length!==1?'s':''}</span></div>
-      <div class="co-steps">
-        <span class="co-step active"><span class="dot"></span>Information</span>
-        <span class="co-sep">&mdash;</span>
-        <span class="co-step active"><span class="dot"></span>Shipping</span>
-        <span class="co-sep">&mdash;</span>
-        <span class="co-step active"><span class="dot"></span>Payment</span>
-      </div>
+
 
       <div class="checkout-layout">
         <form id="checkoutForm" novalidate>
@@ -2224,7 +2234,7 @@ function renderCheckout(){
               <div class="field-row">
                 <div class="field full">
                   <label for="cardNumber">Card Number</label>
-                  <input type="text" id="cardNumber" name="cardNumber" placeholder="0000 0000 0000 0000" autocomplete="cc-number">
+                    <input type="text" id="cardNumber" name="cardNumber" placeholder="0000 0000 0000 0000" autocomplete="cc-number" required>
                   <span class="field-error" data-error-for="cardNumber"></span>
                 </div>
               </div>
@@ -2248,7 +2258,10 @@ function renderCheckout(){
         </form>
 
         <div class="co-summary">
-          <h3>Order Summary</h3>
+          <div class="co-summary-head">
+            <h3>Order Summary</h3>
+            <a href="#/cart" class="size-guide-link">Edit Bag</a>
+          </div>
           ${lines.map(l=>`
             <div class="co-line-item">
               <div class="thumb" style="background:${l.product.bg}">${garmentSVG(l.product.shape, '#141311')}</div>
@@ -2273,6 +2286,11 @@ function renderCheckout(){
       pm.setAttribute('aria-pressed','true');
       payMethod = pm.getAttribute('data-pay');
       document.getElementById('cardFields').style.display = payMethod === 'card' ? 'block' : 'none';
+      const cardNumberInput = document.getElementById('cardNumber');
+      cardNumberInput.required = payMethod === 'card';
+      if(payMethod !== 'card'){
+        form.querySelector('[data-error-for="cardNumber"]').textContent = '';
+      }
     });
   });
 
