@@ -27,6 +27,9 @@ const SHIPPING_FLAT = 120;
 
 const CART = [];
 const WISHLIST = new Set();
+let justPlacedOrder = false;
+let checkoutFormData = {};
+let checkoutPayMethod = 'card';
 
 function garmentSVG(shape, color){
   const shapes = {
@@ -239,11 +242,10 @@ function cartColorName(product, colorIdx){
 }
 function addToCart(id, size, qty, color = 0){
   const existing = CART.find(i => i.id === id && i.size === size && (i.color ?? 0) === color);
-  if(existing) existing.qty += qty;
-  else CART.push({id, size, qty, color});
+  if(existing) existing.qty = Math.min(9, existing.qty + qty);
+  else CART.push({id, size, qty: Math.min(9, qty), color});
   updateBagCount();
 }
-
 function updateBagCount(){
   const n = CART.reduce((s,i)=>s+i.qty,0);
   const el = document.getElementById('bagCount');
@@ -670,12 +672,8 @@ function openQuickView(p, triggerEl){
       btn.disabled = true;
       fakeFetch(true, {delay:350}).then(()=>{
         addToCart(p.id, selectedSize, qty, selectedColorIdx);
-        btn.classList.remove('is-loading');
-        btn.disabled = false;
-        label.textContent = 'Added \u2713';
-        document.getElementById('qvAddMsg').textContent = `${qty} \u00d7 ${p.name} (${selectedSize}) added to your bag.`;
         announce(`${p.name} added to bag`);
-        setTimeout(()=>{ label.textContent = 'Add To Bag'; }, 1400);
+        closeQuickView();
         openCartDrawer();
       });
     });
@@ -812,17 +810,17 @@ function renderCartDrawer(){
     row.querySelector('.cdi-inc').addEventListener('click', ()=>{
       CART[idx].qty = Math.min(9, CART[idx].qty+1);
       updateBagCount();
-      renderCartDrawer();
+      document.querySelector(`.cart-drawer-item[data-idx="${idx}"] .cdi-inc`)?.focus();
     });
     row.querySelector('.cdi-dec').addEventListener('click', ()=>{
       CART[idx].qty = Math.max(1, CART[idx].qty-1);
       updateBagCount();
-      renderCartDrawer();
+      document.querySelector(`.cart-drawer-item[data-idx="${idx}"] .cdi-dec`)?.focus();
     });
     row.querySelector('.cdi-remove').addEventListener('click', ()=>{
       const removed = CART.splice(idx,1)[0];
       updateBagCount();
-      renderCartDrawer();
+      document.getElementById('cartDrawerClose')?.focus();
       if(removed) announce('Item removed from bag');
     });
   });
@@ -2077,7 +2075,7 @@ function renderCart(preserveFocus){
   }
 
   const subtotal = lines.reduce((s,l)=>s + l.product.price * l.item.qty, 0);
-  const shipping = subtotal > FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
+  const shipping = subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
   const total = subtotal + shipping;
 
   app.innerHTML = `
@@ -2091,7 +2089,7 @@ function renderCart(preserveFocus){
               <div>
                 <div class="ci-name">${escapeHTML(l.product.name)}</div>
                 <div class="ci-meta">${escapeHTML(cartColorName(l.product, l.item.color))} / ${escapeHTML(l.item.size)}</div>
-                <div class="ci-price">${BDT(l.product.price)}</div>
+                <div class="ci-price">${BDT(l.product.price * l.item.qty)}</div>
               </div>
               <div class="ci-actions">
                 <div class="qty-stepper">
@@ -2136,7 +2134,7 @@ function renderCart(preserveFocus){
   document.querySelectorAll('[data-remove]').forEach(el=>{
     el.addEventListener('click', ()=>{
       const removed = CART.splice(+el.getAttribute('data-remove'), 1)[0];
-      renderCart(true);
+      renderCart();
       if(removed) announce('Item removed from bag');
     });
   });
@@ -2145,8 +2143,8 @@ function renderCart(preserveFocus){
     const val = document.getElementById('promoInput').value.trim();
     const msg = document.getElementById('promoMsg');
     if(!val){ msg.textContent = 'Enter a promo code.'; msg.className = 'promo-msg error'; return; }
-    msg.textContent = `"${val}" is not a valid code.`;
-    msg.className = 'promo-msg error';
+    msg.textContent = 'There are no active promo codes to apply right now.';
+    msg.className = 'promo-msg info';
   });
 
   updateBagCount();
@@ -2157,9 +2155,9 @@ function renderCheckout(){
   const lines = cartLines();
   if(!lines.length){ location.hash = '#/cart'; return; }
   const subtotal = lines.reduce((s,l)=>s + l.product.price * l.item.qty, 0);
-  const shipping = subtotal > FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
+  const shipping = subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
   const total = subtotal + shipping;
-  let payMethod = 'card';
+  let payMethod = checkoutPayMethod;
 
   app.innerHTML = `
     <div class="wrap">
@@ -2205,7 +2203,7 @@ function renderCheckout(){
             <div class="field-row">
               <div class="field">
                 <label for="city">City</label>
-                <input type="text" id="city" name="city" required value="Chattogram" autocomplete="address-level2">
+                <input type="text" id="city" name="city" required placeholder="e.g. Dhaka" autocomplete="address-level2">
                 <span class="field-error" data-error-for="city"></span>
               </div>
               <div class="field">
@@ -2241,11 +2239,13 @@ function renderCheckout(){
               <div class="field-row">
                 <div class="field">
                   <label for="expiry">Expiry</label>
-                  <input type="text" id="expiry" name="expiry" placeholder="MM / YY" autocomplete="cc-exp">
+                  <input type="text" id="expiry" name="expiry" placeholder="MM / YY" autocomplete="cc-exp" required>
+                  <span class="field-error" data-error-for="expiry"></span>
                 </div>
                 <div class="field">
                   <label for="cvc">CVC</label>
-                  <input type="text" id="cvc" name="cvc" placeholder="123" autocomplete="cc-csc">
+                  <input type="text" id="cvc" name="cvc" placeholder="123" autocomplete="cc-csc" required>
+                  <span class="field-error" data-error-for="cvc"></span>
                 </div>
               </div>
             </div>
@@ -2285,18 +2285,38 @@ function renderCheckout(){
       document.querySelectorAll('.pay-method').forEach(x=>x.setAttribute('aria-pressed','false'));
       pm.setAttribute('aria-pressed','true');
       payMethod = pm.getAttribute('data-pay');
+      checkoutPayMethod = payMethod;
       document.getElementById('cardFields').style.display = payMethod === 'card' ? 'block' : 'none';
       const cardNumberInput = document.getElementById('cardNumber');
+      const expiryInput = document.getElementById('expiry');
+      const cvcInput = document.getElementById('cvc');
       cardNumberInput.required = payMethod === 'card';
+      expiryInput.required = payMethod === 'card';
+      cvcInput.required = payMethod === 'card';
       if(payMethod !== 'card'){
         form.querySelector('[data-error-for="cardNumber"]').textContent = '';
+        form.querySelector('[data-error-for="expiry"]').textContent = '';
+        form.querySelector('[data-error-for="cvc"]').textContent = '';
       }
     });
   });
 
   const form = document.getElementById('checkoutForm');
+    form.querySelectorAll('input[name]').forEach(el=>{
+    if(checkoutFormData[el.name] !== undefined) el.value = checkoutFormData[el.name];
+  });
+  form.addEventListener('input', e=>{
+    if(e.target.name) checkoutFormData[e.target.name] = e.target.value;
+  });
+    document.querySelector(`.pay-method[data-pay="${payMethod}"]`)?.click();
   form.querySelectorAll('input[required]').forEach(input=>{
     input.addEventListener('blur', ()=>{ input.setAttribute('data-touched','true'); validateField(input); });
+    input.addEventListener('input', ()=>{
+      if(input.getAttribute('data-touched') !== 'true') return;
+      validateField(input);
+      const stillHasErrors = Array.from(form.querySelectorAll('.field-error')).some(e=>e.textContent);
+      if(!stillHasErrors) document.getElementById('checkoutError').classList.remove('show');
+    });
   });
 
   function validateField(input){
@@ -2335,6 +2355,7 @@ function renderCheckout(){
     fakeFetch(true, {delay:900})
       .then(()=>{
         CART.length = 0;
+        justPlacedOrder = true;
         location.hash = '#/order-confirmed';
       })
       .catch(()=>{
@@ -2350,6 +2371,10 @@ function renderCheckout(){
 }
 
 function renderConfirm(){
+    if(!justPlacedOrder){ location.hash = '#/shop'; return; }
+    justPlacedOrder = false;
+  checkoutFormData = {};
+  checkoutPayMethod = 'card';
   const oid = 'WAEZ-' + Math.floor(100000 + Math.random()*900000);
   app.innerHTML = `
     <div class="wrap">
